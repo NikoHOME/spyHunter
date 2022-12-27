@@ -1,0 +1,35 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "C/C++: gcc build active file",
+			"command": "gcc",
+			"args": [
+				"-fdiagnostics-color=always",
+				"-g",
+				"-o",
+				"${workspaceFolder}/main",
+                "-I{workspaceFolder}/include",
+				"${workspaceFolder}/func.c",
+                "${workspaceFolder}/template.c",
+				"${workspaceFolder}/main.c",
+                "`sdl2-config --cflags --libs`",
+                //"-L/usr/lib",
+                //"-lSDL",
+                "-lm",
+			],
+			"options": {
+				"cwd": "${fileDirname}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "compiler: x86_64-w64-mingw32-gcc"
+		}
+	]
+}
