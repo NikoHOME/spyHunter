@@ -3,21 +3,30 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
-#define BORDER 40
+#define CAR_HEIGHT 50
+#define CAR_WIDTH 30
+#define START_POSX ((SCREEN_WIDTH-CAR_WIDTH)/2)
+#define START_POSY ((SCREEN_HEIGHT-CAR_HEIGHT*3))
+#define BORDER 160
 #define FRAME_RATE 60
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 
-#define CAR_SPEED 10
+#define CAR_BASE_SPEED 10
 #define QUIT 1
+#define DEAD 1
 
 #define UP 1
 #define DOWN 2
 #define RIGHT 3
 #define LEFT 4
+
+#define BLOCK_WALL 1
+#define KILL_WALL 2
 
 struct object
 {
@@ -35,10 +44,21 @@ struct enemy
     struct object object;
 };
 
+struct wall
+{
+    char type;
+    struct object object;
+};
+
 struct game
 {
     struct player player;
+    struct wall* wall;
+    struct enemy* enemy;
+    int wallAmmount;
     char move[5];
+    char quit;
+    char dead;
     //const Uint8 *keystate;
 };
 
@@ -59,10 +79,12 @@ void DrawLine(SDL_Surface *screen, int x, int y, int l, int dx, int dy, Uint32 c
 void DrawRectangle(SDL_Surface *screen, int x, int y, int l, int k, Uint32 outlineColor, Uint32 fillColor);
 
 void run(struct game *game, struct gameGFX *gfx);
-void input(struct game *game, struct gameGFX *gfx, char *quit);
+void input(struct game *game, struct gameGFX *gfx);
 void draw(struct game game, struct gameGFX *gfx);
 void movement(struct game *game);
+void collision(struct game *game);
 
+void initializeObj(struct object *obj,int posX,int posY,int height,int width);
 void keyCheck(struct game *game, struct gameGFX *gfx,const Uint8 *keystate, int key, int direction);
 char checkCollision(struct object obj1, struct object obj2);
 char framelimit(int currentTime,int lastTime);

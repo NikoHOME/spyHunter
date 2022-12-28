@@ -24,16 +24,21 @@ void debugInt(int output)
 void initializeObj(struct object *obj,int posX,int posY,int height,int width)
 {
     obj->pos.x=posX;
-    obj->pos.y=posX;
+    obj->pos.y=posY;
     obj->pos.h=height;
     obj->pos.w=width;
+    obj->lastPosX=posX;
+    obj->lastPosY=posY;
 }
 
 char checkCollision(struct object obj1, struct object obj2)
 {
+    //debugInt(MIN(obj1.pos.x+obj1.pos.w,obj2.pos.x+obj2.pos.w));
+    //debugInt(MAX(obj1.pos.x,obj2.pos.x));
+    //debugChar("\n");
     if(MIN(obj1.pos.x+obj1.pos.w,obj2.pos.x+obj2.pos.w)<=MAX(obj1.pos.x,obj2.pos.x))
         return 0;
-    if(MAX(obj1.pos.y-obj1.pos.h,obj2.pos.y-obj2.pos.h)>=MIN(obj1.pos.y,obj2.pos.y))
+    if(MIN(obj1.pos.y+obj1.pos.h,obj2.pos.y+obj2.pos.h)<=MAX(obj1.pos.y,obj2.pos.y))
         return 0;
     if(obj1.lastPosY<obj2.lastPosY-obj2.pos.h)
         return DOWN;
@@ -58,7 +63,7 @@ void keyCheck(struct game *game, struct gameGFX *gfx,const Uint8 *keystate, int 
 }
 
 
-void input(struct game *game, struct gameGFX *gfx, char *quit)
+void input(struct game *game, struct gameGFX *gfx)
 {
     
     while(SDL_PollEvent(&gfx->event)) 
@@ -73,7 +78,7 @@ void input(struct game *game, struct gameGFX *gfx, char *quit)
                 keyCheck(game,gfx,keystate,SDL_SCANCODE_RIGHT,RIGHT);
                 break;
 			case SDL_QUIT:
-                *quit=1;
+                game->quit=QUIT;
 				break;
 		}
 	}
@@ -81,13 +86,40 @@ void input(struct game *game, struct gameGFX *gfx, char *quit)
 
 void movement(struct game *game)
 {
-    if(game->move[UP])
-        game->player.object.pos.y-=CAR_SPEED;
+    game->player.object.lastPosX=game->player.object.pos.x;
+    game->player.object.lastPosY=game->player.object.pos.y;
+    if(game->move[UP] && game->player.object.pos.y>=SCREEN_HEIGHT/2)
+    {
+        game->player.object.pos.y-=CAR_BASE_SPEED;
+    }
+    if(game->player.object.pos.y>=SCREEN_HEIGHT-CAR_HEIGHT*2)
+        return;
     if(game->move[DOWN])
-        game->player.object.pos.y+=CAR_SPEED;
+    {
+        game->player.object.pos.y+=CAR_BASE_SPEED/2;
+    }
     if(game->move[LEFT])
-        game->player.object.pos.x-=CAR_SPEED;
+    {
+        game->player.object.pos.x-=CAR_BASE_SPEED;
+    }
     if(game->move[RIGHT])
-        game->player.object.pos.x+=CAR_SPEED;
+    {
+        game->player.object.pos.x+=CAR_BASE_SPEED;
+    }
 }
 
+void collision(struct game *game)
+{
+    int i;
+    char j;
+    for(i=0;i<game->wallAmmount;++i)
+    {
+        if(!(j=checkCollision(game->player.object, game->wall[i].object)))
+            continue;
+        if(game->wall[i].type==KILL_WALL)
+        {
+            game->dead=DEAD;
+            continue;
+        }
+    }
+}

@@ -16,8 +16,8 @@ void draw(struct game game, struct gameGFX *gfx)
     SDL_RenderFillRect(gfx->renderer,&rightSide);
     
     SDL_SetRenderDrawColor(gfx->renderer,255,255,255,255);
-
-
+    SDL_RenderFillRect(gfx->renderer,&game.player.object.pos);
+    SDL_SetRenderDrawColor(gfx->renderer,0,0,255,255);
     SDL_RenderDrawRect(gfx->renderer,&game.player.object.pos);
     SDL_RenderPresent(gfx->renderer);
 }
