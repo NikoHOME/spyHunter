@@ -14,6 +14,7 @@
 				"${workspaceFolder}/func.c",
 				"${workspaceFolder}/gfx.c",
                 "${workspaceFolder}/template.c",
+				"${workspaceFolder}/debug.c",
 				"${workspaceFolder}/main.c",
                 "`sdl2-config --cflags --libs`",
                 //"-L/usr/lib",

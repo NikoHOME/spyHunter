@@ -1,25 +1,13 @@
 #include "main.h"
 
 // Check if time is greater than framerate
-char framelimit(int currentTime,int lastTime)
+char framelimit(int currentTime, int lastTime, int frameRate)
 {
-    if( (currentTime - lastTime) * FRAME_RATE < 1000 ) // 1000 = 1 second 
+    if( (currentTime - lastTime) * frameRate < 1000 ) // 1000 = 1 second 
         return 1;
     return 0;
 }
 
-void debugChar(char* output)
-{
-    FILE *ptr = fopen("debug.txt","a");
-    fprintf(ptr,"%s\n",output);
-    fclose(ptr);
-}
-void debugInt(int output)
-{
-    FILE *ptr = fopen("debug.txt","a");
-    fprintf(ptr,"%d\n",output);
-    fclose(ptr);
-}
 
 void initializeObj(struct object *obj,int posX,int posY,int height,int width)
 {
@@ -91,12 +79,14 @@ void movement(struct game *game)
     if(game->move[UP] && game->player.object.pos.y>=SCREEN_HEIGHT/2)
     {
         game->player.object.pos.y-=CAR_BASE_SPEED;
+        game->velocity+=CAR_BASE_SPEED;
     }
-    if(game->player.object.pos.y>=SCREEN_HEIGHT-CAR_HEIGHT*2)
+    if(game->player.object.pos.y>=START_POSY)
         return;
     if(game->move[DOWN])
     {
         game->player.object.pos.y+=CAR_BASE_SPEED/2;
+        game->velocity-=CAR_BASE_SPEED/2;
     }
     if(game->move[LEFT])
     {
@@ -118,8 +108,62 @@ void collision(struct game *game)
             continue;
         if(game->wall[i].type==KILL_WALL)
         {
-            game->dead=DEAD;
+            game->dead=TRUE;
             continue;
         }
     }
+}
+
+void respawn(struct game *game)
+{
+    initializeObj(&game->player.object,START_POSX,START_POSY,CAR_HEIGHT,CAR_WIDTH);
+    game->velocity=0;
+    game->dead=FALSE;
+}
+
+
+void initializeGame(struct game *game)
+{
+    game->quit=0;
+    game->dead=0;
+    game->wall = (struct wall*)(malloc(sizeof(struct wall)*2));
+    game->wallAmmount=2;
+    initializeObj(&game->player.object,START_POSX,START_POSY,CAR_HEIGHT,CAR_WIDTH);
+    initializeObj(&game->wall[0].object,BORDER-CAR_WIDTH*3/2,0,SCREEN_HEIGHT,CAR_WIDTH);
+    initializeObj(&game->wall[1].object,SCREEN_WIDTH-BORDER+CAR_WIDTH*2/3,0,SCREEN_HEIGHT,CAR_WIDTH);
+    game->wall[0].type=KILL_WALL;
+    game->wall[1].type=KILL_WALL;
+    
+    game->velocity=0;
+    game->frameRate=FRAME_RATE;
+    memset(game->move,0,sizeof(game->move));
+}
+
+void initializeGfx(struct gameGFX *gfx)
+{
+
+    SDL_SetRenderDrawColor( gfx->renderer, 0, 0, 0, 0 );
+    SDL_RenderFillRect( gfx->renderer, NULL );
+    SDL_RenderPresent(gfx->renderer);
+}
+
+char loadBmp(struct gameGFX *gfx, const char *file)
+{
+    gfx->charset = SDL_LoadBMP(file);
+	if(gfx->charset == NULL) 
+    {
+		printf("SDL_LoadBMP(%s) error: %s\n",file, SDL_GetError());
+		return 1;
+	}
+	SDL_SetColorKey(gfx->charset, 1, 0x000000);
+    return 0;
+}
+
+void quit(struct game *game, struct gameGFX *gfx)
+{
+	SDL_DestroyTexture(gfx->scrtex);
+	SDL_DestroyWindow(gfx->window);
+	SDL_DestroyRenderer(gfx->renderer);
+    free(game->wall);
+    SDL_Quit();
 }
