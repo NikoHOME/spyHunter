@@ -16,6 +16,8 @@
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 
+#define SCORE_DISTANCE 750
+#define SCORE_PER_DISTANCE 15
 #define CAR_BASE_SPEED 10
 #define QUIT 1
 #define TRUE 1
@@ -29,6 +31,9 @@
 #define BLOCK_WALL 1
 #define KILL_WALL 2
 
+#define MAX_ENEMY_START 1
+#define MAX_ENEMY 5
+#define ENEMY_COOLDOWN_START 30
 struct object
 {
     SDL_Rect pos;
@@ -56,9 +61,12 @@ struct game
     struct player player;
     struct wall* wall;
     struct enemy* enemy;
+    int enemySpawnMinX, enemySpawnMaxX, enemyMax;
+    int enemyAmmount, enemyCooldown, enemyNext;
     int wallAmmount;
-    int velocity;
+    int velocity, distance, score;
     int frameRate;
+    int time;
     char move[5];
     char quit;
     char dead;
@@ -84,13 +92,17 @@ void DrawRectangle(SDL_Surface *screen, int x, int y, int l, int k, Uint32 outli
 
 void run(struct game *game, struct gameGFX *gfx);
 void input(struct game *game, struct gameGFX *gfx);
+
 void movement(struct game *game);
 void collision(struct game *game);
 void respawn(struct game *game);
+void update(struct game *game);
+void spawnEnemy(struct game *game);
 
 void drawPlayer(struct game game, struct gameGFX *gfx);
 void drawRoad(struct game game, struct gameGFX *gfx);
-void drawString(SDL_Renderer *screen, int x, int y, const char *text, SDL_Texture *charset);
+void drawEnemy(struct game game, struct gameGFX *gfx);
+void drawString(SDL_Renderer *screen, int x, int y, const char *text, SDL_Texture *charset,float scaleX, float scaleY);
 
 void initializeGame(struct game *game);
 void initializeGfx(struct gameGFX *gfx);

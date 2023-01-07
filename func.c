@@ -114,6 +114,37 @@ void collision(struct game *game)
     }
 }
 
+void update(struct game *game)
+{
+    game->distance += game->velocity;
+    if(game->distance >= SCORE_DISTANCE)
+    {
+        game->distance %= SCORE_DISTANCE;
+        game->score += SCORE_PER_DISTANCE;
+    }
+}
+
+void spawnEnemy(struct game *game)
+{
+    if(game->enemyAmmount>=game->enemyMax)
+        return;
+    int spawnPositionX=game->enemySpawnMinX + rand()%(game->enemySpawnMaxX - game->enemySpawnMinX);
+    struct object newEnemy;
+    if(game->velocity>40)
+        initializeObj(&newEnemy,spawnPositionX,-CAR_HEIGHT/2,CAR_HEIGHT,CAR_WIDTH);
+    else
+        initializeObj(&newEnemy,spawnPositionX,SCREEN_HEIGHT-CAR_HEIGHT/2,CAR_HEIGHT,CAR_WIDTH);
+    int i;
+    char j;
+    for(i=0;i<game->enemyAmmount;++i)
+    {
+        if(j=checkCollision(newEnemy, game->enemy[i].object))
+            return;
+    }
+    game->enemy[game->enemyAmmount].object=newEnemy;
+    ++game->enemyAmmount;
+}
+
 void respawn(struct game *game)
 {
     initializeObj(&game->player.object,START_POSX,START_POSY,CAR_HEIGHT,CAR_WIDTH);
@@ -135,7 +166,17 @@ void initializeGame(struct game *game)
     game->wall[1].type=KILL_WALL;
     
     game->velocity=0;
+    game->score=0;
+    game->distance=0;
     game->frameRate=FRAME_RATE;
+    
+    game->enemyAmmount=0;
+    game->enemyCooldown=ENEMY_COOLDOWN_START;
+    game->enemyNext=ENEMY_COOLDOWN_START;
+    game->enemyMax=MAX_ENEMY_START;
+    game->enemySpawnMinX=BORDER;
+    game->enemySpawnMaxX=SCREEN_WIDTH-BORDER;
+    game->enemy = (struct enemy *)(malloc(MAX_ENEMY*sizeof(struct enemy)));
     memset(game->move,0,sizeof(game->move));
 }
 
@@ -165,5 +206,6 @@ void quit(struct game *game, struct gameGFX *gfx)
 	SDL_DestroyWindow(gfx->window);
 	SDL_DestroyRenderer(gfx->renderer);
     free(game->wall);
+    free(game->enemy);
     SDL_Quit();
 }

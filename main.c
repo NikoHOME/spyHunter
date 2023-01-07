@@ -57,8 +57,11 @@ void run(struct game *game, struct gameGFX *gfx)
             respawn(game);
         }
         drawPlayer(*game,gfx);
+        drawEnemy(*game,gfx);
         movement(game);
+        update(game);
         collision(game);
+        spawnEnemy(game);
     }
 }
 
