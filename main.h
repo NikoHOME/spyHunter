@@ -18,7 +18,7 @@
 
 #define SCORE_DISTANCE 750
 #define SCORE_PER_DISTANCE 15
-#define CAR_BASE_SPEED 10
+#define CAR_BASE_SPEED 5
 #define QUIT 1
 #define TRUE 1
 #define FALSE 0
@@ -30,10 +30,17 @@
 
 #define BLOCK_WALL 1
 #define KILL_WALL 2
-
-#define MAX_ENEMY_START 1
+#define KILL_SPEED 120
+#define MAX_ENEMY_START 2
 #define MAX_ENEMY 5
-#define ENEMY_COOLDOWN_START 30
+#define ENEMY_COOLDOWN_START 2
+#define CIVILIAN_SPEED 45
+
+#define ENEMY_CHANCE 30
+#define ENEMY_ARMOUR_CHANCE 30
+
+#define SHOOT_COOLDOWN 15;
+
 struct object
 {
     SDL_Rect pos;
@@ -43,11 +50,17 @@ struct object
 struct player
 {
     struct object object;
+    char canShoot;
+    int shootCooldown;
 };
 
 struct enemy
 {
     struct object object;
+    char isCivilian;
+    char isArmoured;
+    char dead;
+    int speed;
 };
 
 struct wall
@@ -66,7 +79,7 @@ struct game
     int wallAmmount;
     int velocity, distance, score;
     int frameRate;
-    int time;
+    int time,ticks;
     char move[5];
     char quit;
     char dead;
@@ -112,7 +125,7 @@ char loadBmp(struct gameGFX *gfx, const char *file);
 
 void keyCheck(struct game *game, struct gameGFX *gfx,const Uint8 *keystate, int key, int direction);
 char checkCollision(struct object obj1, struct object obj2);
-char framelimit(int currentTime, int lastTime, int frameRate);
+int framelimit(int currentTime, int lastTime, int frameRate);
 
 void debugChar(char *output);
 void debugInt(int output);

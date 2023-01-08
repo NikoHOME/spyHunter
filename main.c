@@ -44,10 +44,8 @@ void run(struct game *game, struct gameGFX *gfx)
     
     while(game->quit!=QUIT)
     {
-        sleep(1/1000);
         currentTime=SDL_GetTicks();
-        if(framelimit(currentTime, lastTime, game->frameRate))
-            continue;
+        usleep(framelimit(currentTime, lastTime, game->frameRate));
         lastTime=currentTime;
         input(game,gfx);
         drawRoad(*game,gfx);
