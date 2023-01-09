@@ -15,6 +15,15 @@
 #define FRAME_RATE 60
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define TEXT_SIZE 8
+
+#define PAUSE_KEY SDL_SCANCODE_P
+#define NEW_GAME_KEY SDL_SCANCODE_N
+#define END_GAME_KEY SDL_SCANCODE_F
+#define QUIT_KEY SDL_SCANCODE_ESCAPE
+#define SAVE_KEY SDL_SCANCODE_S
+#define LOAD_KEY SDL_SCANCODE_L
+#define SHOOT_KEY SDL_SCANCODE_SPACE
 
 #define SCORE_DISTANCE 750
 #define SCORE_PER_DISTANCE 15
@@ -81,8 +90,7 @@ struct game
     int frameRate;
     int time,ticks;
     char move[5];
-    char quit;
-    char dead;
+    char quit, newGame, endGame, dead, isPaused, isFrozen;
     //const Uint8 *keystate;
 };
 
@@ -115,6 +123,8 @@ void spawnEnemy(struct game *game);
 void drawPlayer(struct game game, struct gameGFX *gfx);
 void drawRoad(struct game game, struct gameGFX *gfx);
 void drawEnemy(struct game game, struct gameGFX *gfx);
+void drawPause(struct game game, struct gameGFX *gfx);
+void drawEndScreen(struct game game, struct gameGFX *gfx);
 void drawString(SDL_Renderer *screen, int x, int y, const char *text, SDL_Texture *charset,float scaleX, float scaleY);
 
 void initializeGame(struct game *game);
@@ -125,6 +135,7 @@ char loadBmp(struct gameGFX *gfx, const char *file);
 
 void keyCheck(struct game *game, struct gameGFX *gfx,const Uint8 *keystate, int key, int direction);
 char checkCollision(struct object obj1, struct object obj2);
+void playerCollison(struct game *game, char direction, int index);
 int framelimit(int currentTime, int lastTime, int frameRate);
 
 void debugChar(char *output);

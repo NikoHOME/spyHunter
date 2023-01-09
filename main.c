@@ -22,7 +22,6 @@ int main()
     SDL_ShowCursor(SDL_DISABLE);
     SDL_RenderSetLogicalSize(gfx.renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    initializeGame(&game);
     initializeGfx(&gfx);
     if(loadBmp(&gfx,"./cs8x8.bmp"))
     {
@@ -30,8 +29,12 @@ int main()
         return 1;
     }
     gfx.scrtex= SDL_CreateTextureFromSurface(gfx.renderer,gfx.charset);
-    run(&game, &gfx);
-
+    game.newGame=TRUE;
+    while(game.newGame==TRUE)
+    {
+        initializeGame(&game);
+        run(&game, &gfx);
+    }
     quit(&game, &gfx);
     return 0;
 }
@@ -40,19 +43,40 @@ int main()
 
 void run(struct game *game, struct gameGFX *gfx)
 {
-    int currentTime, lastTime = SDL_GetTicks();
+    int currentTime, respawnTime,lastTime = SDL_GetTicks();
     
-    while(game->quit!=QUIT)
+    while(game->quit!=TRUE)
     {
         currentTime=SDL_GetTicks();
         usleep(framelimit(currentTime, lastTime, game->frameRate));
         lastTime=currentTime;
         input(game,gfx);
+        if(game->isPaused)
+            continue;
         drawRoad(*game,gfx);
         if(game->dead==TRUE)
         {
-            sleep(1);
             respawn(game);
+            respawnTime=1000;
+            game->isFrozen=TRUE;
+            while(1)
+            {
+                currentTime=SDL_GetTicks();
+                usleep(framelimit(currentTime, lastTime, game->frameRate));
+                lastTime=currentTime;
+                input(game,gfx);
+                if(game->isPaused)
+                    continue;
+                drawRoad(*game,gfx);
+                update(game);
+                drawPlayer(*game,gfx);
+                drawEnemy(*game,gfx);
+                collision(game);
+                respawnTime-=(1000/game->frameRate);
+                if(respawnTime<=0)
+                    break;
+            }
+            game->isFrozen=FALSE;
         }
         drawPlayer(*game,gfx);
         drawEnemy(*game,gfx);
@@ -61,5 +85,19 @@ void run(struct game *game, struct gameGFX *gfx)
         collision(game);
         spawnEnemy(game);
     }
+
+    if(game->endGame!=TRUE)
+        return;
+    drawEndScreen(*game,gfx);
+    game->quit=FALSE;
+    while(game->quit!=TRUE)
+    {
+        currentTime=SDL_GetTicks();
+        usleep(framelimit(currentTime, lastTime, game->frameRate));
+        lastTime=currentTime;
+        input(game,gfx);
+    }
+
+
 }
 

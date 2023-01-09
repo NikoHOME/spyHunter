@@ -28,6 +28,7 @@ void drawEnemy(struct game game, struct gameGFX *gfx)
     }
     SDL_RenderPresent(gfx->renderer);
 }
+
 void drawRoad(struct game game, struct gameGFX *gfx)
 {
     SDL_SetRenderDrawColor( gfx->renderer, 0, 0, 0, 255 );
@@ -71,6 +72,59 @@ void drawRoad(struct game game, struct gameGFX *gfx)
     SDL_RenderPresent(gfx->renderer);
 }
 
+void drawPause(struct game game, struct gameGFX *gfx)
+{
+    drawRoad(game,gfx);
+    drawPlayer(game,gfx);
+    drawEnemy(game,gfx);
+    SDL_RenderPresent(gfx->renderer);
+    SDL_SetRenderDrawColor(gfx->renderer,0,0,0,100);
+    SDL_Rect box;
+
+    box.x=SCREEN_WIDTH/4;
+    box.y=SCREEN_HEIGHT/4;
+    box.h=SCREEN_HEIGHT/2;
+    box.w=SCREEN_WIDTH/2;
+
+    static const char text[]= "PAUSE";
+    SDL_SetRenderDrawBlendMode(gfx->renderer, SDL_BLENDMODE_BLEND);
+    SDL_RenderFillRect( gfx->renderer, NULL );
+    SDL_SetRenderDrawColor(gfx->renderer,0,0,20,100);
+    SDL_RenderFillRect(gfx->renderer,&box);
+    SDL_SetRenderDrawColor(gfx->renderer,255,255,255,255);
+    drawString(gfx->renderer, SCREEN_WIDTH/2-strlen(text)*TEXT_SIZE, SCREEN_HEIGHT/2-TEXT_SIZE, text, gfx->scrtex, 2, 2);
+
+    SDL_RenderPresent(gfx->renderer);
+}
+
+void drawEndScreen(struct game game, struct gameGFX *gfx)
+{
+    static char bufferScore[40],bufferTime[40];
+    static const char text[3][10] = 
+    {
+        "Score: ",
+        "Time: ",
+        "Game Over"
+    };
+        static const char menu[2][20]= 
+    {
+        "esc: quit",
+        "n: new game",
+    };
+    sprintf(bufferScore, "%s%d", text[0], game.score);
+    sprintf(bufferTime, "%s%d", text[1], game.time); 
+    SDL_SetRenderDrawColor(gfx->renderer,0,0,0,255);
+    SDL_RenderFillRect( gfx->renderer, NULL );
+    SDL_SetRenderDrawColor(gfx->renderer,255,255,255,255);
+    drawString(gfx->renderer, SCREEN_WIDTH/2-strlen(text[2])*TEXT_SIZE*2, SCREEN_HEIGHT/2-TEXT_SIZE*8, text[2], gfx->scrtex, 4, 4);
+    drawString(gfx->renderer, SCREEN_WIDTH/2-strlen(bufferScore)*TEXT_SIZE, SCREEN_HEIGHT/2-TEXT_SIZE, bufferScore, gfx->scrtex, 2, 2);
+    drawString(gfx->renderer, SCREEN_WIDTH/2-strlen(bufferTime)*TEXT_SIZE, SCREEN_HEIGHT/2+TEXT_SIZE, bufferTime, gfx->scrtex, 2, 2);
+
+    drawString(gfx->renderer, SCREEN_WIDTH/2-strlen(menu[0])*TEXT_SIZE, SCREEN_HEIGHT/2+TEXT_SIZE*3, menu[0], gfx->scrtex, 2, 2);
+    drawString(gfx->renderer, SCREEN_WIDTH/2-strlen(menu[1])*TEXT_SIZE, SCREEN_HEIGHT/2+TEXT_SIZE*5, menu[1], gfx->scrtex, 2, 2);
+
+    SDL_RenderPresent(gfx->renderer);
+}
 void drawString(SDL_Renderer *screen, int x, int y, const char *text, SDL_Texture *charset,float scaleX, float scaleY)
 {
     x/=scaleX;
