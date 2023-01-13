@@ -23,14 +23,14 @@ int main()
     SDL_RenderSetLogicalSize(gfx.renderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 
     initializeGfx(&gfx);
-    if(loadBmp(&gfx,"./cs8x8.bmp"))
+    if(loadBmp(&gfx,"./sh8x8.bmp"))
     {
         quit(&game, &gfx);
         return 1;
     }
     gfx.scrtex= SDL_CreateTextureFromSurface(gfx.renderer,gfx.charset);
-    game.newGame=TRUE;
-    while(game.newGame==TRUE)
+    game.gameState[NEW_GAME] = TRUE;
+    while(game.gameState[NEW_GAME] == TRUE)
     {
         initializeGame(&game);
         run(&game, &gfx);
@@ -43,59 +43,61 @@ int main()
 
 void run(struct game *game, struct gameGFX *gfx)
 {
-    int currentTime, respawnTime,lastTime = SDL_GetTicks();
+    int currentTime, respawnTime, lastTime = SDL_GetTicks();
     
-    while(game->quit!=TRUE)
+    while(game->gameState[QUIT] != TRUE)
     {
-        currentTime=SDL_GetTicks();
-        usleep(framelimit(currentTime, lastTime, game->frameRate));
-        lastTime=currentTime;
-        input(game,gfx);
-        if(game->isPaused)
+        currentTime = SDL_GetTicks();
+        usleep(framelimit(currentTime, lastTime, game->gameInts[FRAME_RATE]));
+        lastTime = currentTime;
+        input(game, gfx);
+        if(game->gameState[IS_PAUSED])
             continue;
         drawRoad(*game,gfx);
-        if(game->dead==TRUE)
+        if(game->gameState[DEAD] == TRUE)
         {
             respawn(game);
-            respawnTime=1000;
-            game->isFrozen=TRUE;
+            respawnTime = 1000;
+            game->gameState[IS_FROZEN] = TRUE;
             while(1)
             {
-                currentTime=SDL_GetTicks();
-                usleep(framelimit(currentTime, lastTime, game->frameRate));
-                lastTime=currentTime;
-                input(game,gfx);
-                if(game->isPaused)
+                currentTime = SDL_GetTicks();
+                usleep(framelimit(currentTime, lastTime, game->gameInts[FRAME_RATE]));
+                lastTime = currentTime;
+                input(game, gfx);
+                if(game->gameState[IS_PAUSED])
                     continue;
-                drawRoad(*game,gfx);
+                drawRoad(*game, gfx);
+                drawPlayer(*game, gfx);
+                drawEnemy(*game, gfx);
+                drawBullet(*game, gfx);
                 update(game);
-                drawPlayer(*game,gfx);
-                drawEnemy(*game,gfx);
                 collision(game);
-                respawnTime-=(1000/game->frameRate);
-                if(respawnTime<=0)
+                respawnTime -= (1000 / game->gameInts[FRAME_RATE]);
+                if(respawnTime <= 0)
                     break;
             }
-            game->isFrozen=FALSE;
+            game->gameState[IS_FROZEN] = FALSE;
         }
-        drawPlayer(*game,gfx);
-        drawEnemy(*game,gfx);
-        movement(game);
+        drawPlayer(*game, gfx);
+        drawEnemy(*game, gfx);
+        drawBullet(*game, gfx);
+        inputCompute(game);
         update(game);
         collision(game);
         spawnEnemy(game);
     }
 
-    if(game->endGame!=TRUE)
+    if(game->gameState[END_GAME] != TRUE)
         return;
-    drawEndScreen(*game,gfx);
-    game->quit=FALSE;
-    while(game->quit!=TRUE)
+    drawEndScreen(*game, gfx);
+    game->gameState[QUIT] = FALSE;
+    while(game->gameState[QUIT] != TRUE)
     {
-        currentTime=SDL_GetTicks();
-        usleep(framelimit(currentTime, lastTime, game->frameRate));
-        lastTime=currentTime;
-        input(game,gfx);
+        currentTime = SDL_GetTicks();
+        usleep(framelimit(currentTime, lastTime, game->gameInts[FRAME_RATE]));
+        lastTime = currentTime;
+        input(game, gfx);
     }
 
 

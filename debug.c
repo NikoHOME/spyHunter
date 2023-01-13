@@ -1,6 +1,6 @@
 #include "main.h"
 
-void debugChar(char *output)
+void debugChar(const char *output)
 {
     FILE *ptr = fopen("debug.txt","a");
     fprintf(ptr,"%s\n",output);
@@ -13,7 +13,7 @@ void debugInt(int output)
     fclose(ptr);
 }
 
-void debugCharConsole(char *output)
+void debugCharConsole(const char *output)
 {
     printf("%s\n",output);
 }
