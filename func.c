@@ -103,47 +103,42 @@ void update(struct game *game)
 void changeRoad(struct game *game)
 {
     int randomNumber, currentWidth, pushLeft, pushRight;
-    if(rand()%100 <= WIDTH_CHANGE_CHANCE)
+    if(!game->gameState[TRANSITION] && rand()%100 <= WIDTH_CHANGE_CHANCE)
     {
-        randomNumber = rand()%4;
+        randomNumber = rand()%5;
         currentWidth = game->wall[1].object.pos.x - game->wall[0].object.pos.w;
-        debugIntConsole(randomNumber);
-        debugIntConsole(currentWidth);
         switch(randomNumber)
         {
-            case 0: // Shrink
-                if(currentWidth > WIDTH_MIN)
-                    pushLeft = pushRight = WIDTH_CHANGE_OFFSET;
+            case 0: case 1: // Shrink
+                if(currentWidth < WIDTH_MIN )
+                    return;
+                pushLeft = pushRight = WIDTH_CHANGE_OFFSET;
                 break;
-            case 1: // Grow
-                if(currentWidth < WIDTH_MAX)
-                    pushLeft = pushRight = -WIDTH_CHANGE_OFFSET;
+            case 2: // Grow
+                if(currentWidth > WIDTH_MAX || game->wall[0].object.pos.w < WIDTH_MIN_DIRECTION || game->wall[1].object.pos.w < WIDTH_MIN_DIRECTION)
+                    return;
+                pushLeft = pushRight = -WIDTH_CHANGE_OFFSET;
                 break;
-            case 2: //Push left
+            case 3: //Push left
+                if(game->wall[0].object.pos.w < WIDTH_MIN_DIRECTION)
+                    return;
                 pushLeft = -WIDTH_CHANGE_OFFSET;
                 pushRight = WIDTH_CHANGE_OFFSET;
                 break;
-            case 3: //Push Right
+            case 4: //Push Right
+                if(game->wall[1].object.pos.w < WIDTH_MIN_DIRECTION)
+                    return;
                 pushLeft = WIDTH_CHANGE_OFFSET;
                 pushRight = -WIDTH_CHANGE_OFFSET;
                 break;
         }
-        currentWidth = game->wall[0].object.pos.w;
-        if(randomNumber & 1 && currentWidth < WIDTH_MAX)
-        {
-            randomNumber = WIDTH_CHANGE_OFFSET;
-        }
-        else
-        {
-            if(currentWidth > WIDTH_MIN)
-                randomNumber = -WIDTH_CHANGE_CHANCE;
-            else
-                randomNumber = WIDTH_CHANGE_OFFSET;
-        }
+
         initializeObj(&game->wall[2].object, 0, 0, 0, game->wall[0].object.pos.w + pushLeft);
         initializeObj(&game->wall[3].object, game->wall[1].object.pos.x - pushRight, 0, 0, game->wall[1].object.pos.w  + pushRight);
         game->gameState[TRANSITION] = TRUE;
         game->gameInts[TRANSITION_Y] = 0;
+        game->gameInts[ENEMY_SPAWN_MIN_X] = game->wall[0].object.pos.w + pushLeft;
+        game->gameInts[ENEMY_SPAWN_MAX_X] = game->wall[1].object.pos.x - pushRight;
     }
 }
 
@@ -159,7 +154,7 @@ void respawn(struct game *game)
         game->gameState[END_GAME] = TRUE;
         game->gameState[QUIT] = TRUE;
     }
-    initializeObj(&game->player.object, START_POSX, START_POSY, CAR_HEIGHT, CAR_WIDTH);
+    initializeObj(&game->player.object, (game->gameInts[ENEMY_SPAWN_MAX_X] + game->gameInts[ENEMY_SPAWN_MIN_X] - CAR_WIDTH)/2, START_POSY, CAR_HEIGHT, CAR_WIDTH);
     game->gameInts[VELOCITY] = 0;
     game->gameState[DEAD] = FALSE;
 }
