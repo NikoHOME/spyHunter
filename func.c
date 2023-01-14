@@ -9,6 +9,13 @@ int framelimit(int currentTime, int lastTime, int frameRate)
     return FALSE;
 }
 
+void sleepTillNextFrame(struct game *game, int *currentTime, int *lastTime)
+{
+    *currentTime = SDL_GetTicks();
+    usleep(framelimit(*currentTime, *lastTime, game->gameInts[FRAME_RATE]));
+    *lastTime = *currentTime;
+}
+
 
 void update(struct game *game)
 {
@@ -55,7 +62,10 @@ void update(struct game *game)
                 game->gameState[KILLED_CIVILIAN] = FALSE;
         }
         if(game->gameInts[TIME] <= 0)
+        {
             game->gameState[END_GAME] = TRUE;
+            game->gameState[QUIT] = TRUE;
+        }
         else if(game->gameInts[TIME] <= 90 )
             game->gameInts[ENEMY_AMMOUNT_MAX] = 3;
     }
@@ -159,6 +169,30 @@ void respawn(struct game *game)
     game->gameState[DEAD] = FALSE;
 }
 
+void handleRespawn(struct game *game, struct gameGFX *gfx, int *currentTime, int *lastTime)
+{
+    int respawnTime;
+    if(game->gameState[DEAD] == TRUE)
+    {
+        respawn(game);
+        respawnTime = RESPAWN_TIME;
+        game->gameState[IS_FROZEN] = TRUE;
+        while(1)
+        {
+            sleepTillNextFrame(game, currentTime, lastTime);
+            input(game, gfx);
+            if(game->gameState[IS_PAUSED])
+                continue;
+            drawMain(*game,gfx);
+            update(game);
+            collision(game);
+            respawnTime -= (1000 / game->gameInts[FRAME_RATE]);
+            if(respawnTime <= 0)
+                break;
+        }
+        game->gameState[IS_FROZEN] = FALSE;
+    }
+}
 
 
 

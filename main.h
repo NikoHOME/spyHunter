@@ -31,6 +31,7 @@
 #define SCORE_DISTANCE 750
 #define SCORE_PER_DISTANCE 15
 #define CAR_BASE_SPEED 5
+#define RESPAWN_TIME 1000
 #define TRUE 1
 #define FALSE 0
 
@@ -173,6 +174,7 @@ void input(struct game *game, struct gameGFX *gfx);
 void inputCompute(struct game *game);
 void collision(struct game *game);
 void respawn(struct game *game);
+void handleRespawn(struct game *game, struct gameGFX *gfx, int *currentTime, int *lastTime);
 void update(struct game *game);
 void changeRoad(struct game *game);
 void spawnEnemy(struct game *game);
@@ -182,6 +184,7 @@ void load(struct game *game, struct wall *wall, struct enemy *enemy, struct bull
 void saveInput(struct game *game, struct gameGFX *gfx);
 void loadInput(struct game *game, struct gameGFX *gfx);
 
+void drawMain(struct game game, struct gameGFX *gfx);
 void drawPlayer(struct game game, struct gameGFX *gfx);
 void drawRoad(struct game game, struct gameGFX *gfx);
 void drawEnemy(struct game game, struct gameGFX *gfx);
@@ -204,6 +207,7 @@ char checkCollision(struct object obj1, struct object obj2);
 void playerCollision(struct game *game, char direction, int index);
 void enemyCollision(struct game *game, char direction, int index, int index2);
 int framelimit(int currentTime, int lastTime, int frameRate);
+void sleepTillNextFrame(struct game *game, int *currentTime, int *lastTime);
 
 void debugChar(const char *output);
 void debugInt(int output);

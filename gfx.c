@@ -1,6 +1,14 @@
 #include "main.h"
 
 
+void drawMain(struct game game, struct gameGFX *gfx)
+{
+    drawRoad(game,gfx);
+    drawPlayer(game, gfx);
+    drawEnemy(game, gfx);
+    drawBullet(game, gfx);
+}
+
 void drawPlayer(struct game game, struct gameGFX *gfx)
 {
     
