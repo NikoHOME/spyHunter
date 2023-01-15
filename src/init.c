@@ -16,6 +16,8 @@ void initializeGame(struct game *game)
     initializeObj(&game->player.object, START_POSX, START_POSY, CAR_HEIGHT, CAR_WIDTH);
     initializeObj(&game->wall[0].object, 0, 0, SCREEN_HEIGHT, BORDER);
     initializeObj(&game->wall[1].object, SCREEN_WIDTH - BORDER, 0, SCREEN_HEIGHT, BORDER);
+    game->wall[2].object = game->wall[0].object;
+    game->wall[3].object = game->wall[1].object;
 
     game->wall[0].type = KILL_WALL;
     game->wall[1].type = KILL_WALL;
