@@ -127,7 +127,7 @@ void drawRoad(struct game game, struct gameGFX *gfx)
 	d.x = 20;
 	d.y = 50;
     SDL_RenderCopy(gfx->renderer, gfx->scrtex, &s, &d);
-    static const char menu[10][20] = 
+    static const char menu[12][20] = 
     {
         "arrows: move",
         "esc: quit",
@@ -138,13 +138,18 @@ void drawRoad(struct game game, struct gameGFX *gfx)
         "space: shoot",
         "f: end game",
         "a,b,c,d,e,f,g,h",
-        "i,j,k,l,m,n,o,r"
+        "i,j,k,l,m,n,o,r",
+        "Wiktor Gawronski",
+        "193285"
     };
     index2 = SCREEN_HEIGHT/8;
     for(index = 0;index < 10;++index,index2 += 15)
     {
         drawString(gfx->renderer, SCREEN_WIDTH-BORDER+10, SCREEN_HEIGHT/2 + index2, menu[index], gfx->scrtex, 1.5, 1.5);
     }
+    index2 = SCREEN_HEIGHT/16;
+    drawString(gfx->renderer, SCREEN_WIDTH-BORDER+10, index2, menu[10], gfx->scrtex, 1.5, 1.5);
+    drawString(gfx->renderer, SCREEN_WIDTH-BORDER+10, index2+15, menu[11], gfx->scrtex, 1.5, 1.5);
     SDL_RenderPresent(gfx->renderer);
 }
 
