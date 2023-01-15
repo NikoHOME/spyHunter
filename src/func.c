@@ -16,12 +16,27 @@ void sleepTillNextFrame(struct game *game, int *currentTime, int *lastTime)
     *lastTime = *currentTime;
 }
 
+struct object viewToPosition(struct enemy enemy, int direction)
+{
+    struct object output;
+    initializeObj
+    (
+            &output,
+            enemy.object.pos.x + enemy.view[direction].pos.x,
+            enemy.object.pos.y + enemy.view[direction].pos.y,
+            enemy.view[direction].pos.h, 
+            enemy.view[direction].pos.w
+    );
+    return output;
+}
+
 
 void update(struct game *game)
 {
     ++game->gameInts[TICKS];
     ++game->player.bulletNext;
     game->gameInts[DISTANCE] += game->gameInts[VELOCITY];
+
     if(game->gameInts[DISTANCE] >= SCORE_DISTANCE && !game->gameState[KILLED_CIVILIAN])
     {
         game->gameInts[DISTANCE] %= SCORE_DISTANCE;
@@ -55,39 +70,83 @@ void update(struct game *game)
         ++game->gameInts[ENEMY_NEXT];
         if(!game->gameState[TRANSITION]) 
             changeRoad(game);
+        if(game->gameInts[POWERUP_DURATION])
+            --game->gameInts[POWERUP_DURATION];
         if(game->gameInts[KILLED_CIVILIAN])
         {
             ++game->gameInts[PENALTY_END];
             if(game->gameInts[PENALTY_END] >= KILLED_CIVILIAN_PENALTY)
                 game->gameState[KILLED_CIVILIAN] = FALSE;
         }
-        if(game->gameInts[TIME] <= 0)
-        {
-            game->gameState[END_GAME] = TRUE;
-            game->gameState[QUIT] = TRUE;
-        }
-        else if(game->gameInts[TIME] <= 90 )
+        else if(game->gameInts[TIME] >= 90 )
             game->gameInts[ENEMY_AMMOUNT_MAX] = 3;
     }
-    int index;
+    int index, index2;
     for(index = 0; index < MAX_ENEMY; ++index)
     {
         if(game->enemy[index].dead)
             continue;
         game->enemy[index].object.lastPosX = game->enemy[index].object.pos.x;
         game->enemy[index].object.lastPosY = game->enemy[index].object.pos.y;
-        if(game->enemy[index].object.pos.y > SCREEN_HEIGHT + CAR_HEIGHT)
+        if(game->enemy[index].object.pos.y > SCREEN_HEIGHT*3/2)
         {
             --game->gameInts[ENEMY_AMMOUNT];
             game->enemy[index].dead = TRUE;
             continue;
         }
-        if(game->enemy[index].object.pos.y < -CAR_HEIGHT)
+        if(game->enemy[index].object.pos.y < -SCREEN_HEIGHT/2)
         {
             --game->gameInts[ENEMY_AMMOUNT];
             game->enemy[index].dead = TRUE;
         }
-        game->enemy[index].object.pos.y += (game->gameInts[VELOCITY] - game->enemy[index].speed)/10;
+        game->enemy[index].object.pos.y += (game->gameInts[VELOCITY] - game->enemy[index].speed)/6;
+        for(index2 = 0; index2 < game->gameInts[WALL_AMMOUNT]; ++index2)
+        {
+            if(game->enemy[index].stunned)
+            {
+                --game->enemy[index].stunned;
+                continue;
+            }
+            if(!checkCollision(viewToPosition(game->enemy[index], UP), game->wall[index2].object))
+                continue;
+            if(index2 & 1)
+            {
+                 game->enemy[index].object.pos.x -= CAR_BASE_SPEED/5;
+            }
+            else
+            {
+                game->enemy[index].object.pos.x += CAR_BASE_SPEED/5;
+            }
+        }
+        int distance;
+        if(game->enemy[index].isArmoured && !game->gameState[IS_FROZEN] && game->gameInts[VELOCITY] > CIVILIAN_SPEED)
+        {
+            distance = game->player.object.pos.y - game->enemy[index].object.pos.y;
+            if(abs(game->enemy[index].speed - game->gameInts[VELOCITY]) > CAR_BASE_SPEED*2)
+                game->enemy[index].speed = game->gameInts[VELOCITY] - distance/100;
+            if(distance > ATTACK_DISTANCE || distance < ATTACK_DISTANCE/2)
+            {
+                game->enemy[index].speed -= distance/100;
+            }
+            if(game->enemy[index].attack)
+            {
+                --game->enemy[index].attack;
+                if(game->enemy[index].attack < ATTACK_DURATION_BEGIN && game->enemy[index].attack > ATTACK_DURATION)
+                    game->enemy[index].object.pos.x +=  game->enemy[index].attackPower;
+                continue;
+            }
+            game->enemy[index].attackPower = 0;
+            if(checkCollision(viewToPosition(game->enemy[index], LEFT), game->player.object))
+            {
+                game->enemy[index].attackPower = -CAR_BASE_SPEED;
+                game->enemy[index].attack = ATTACK_DELAY;
+            }
+            if(checkCollision(viewToPosition(game->enemy[index], RIGHT), game->player.object))
+            {
+                game->enemy[index].attackPower = CAR_BASE_SPEED;
+                game->enemy[index].attack = ATTACK_DELAY;
+            }
+        }
     }
     for(index = 0; index < MAX_BULLETS; ++index)
     {
@@ -108,6 +167,13 @@ void update(struct game *game)
             --game->gameInts[BULLET_AMMOUNT];
         }
     }
+    for(index = 0; index < MAX_POWERUP; ++index)
+    {
+        if(game->powerup[index].dead)
+            continue;
+        game->powerup[index].object.pos.y += (game->gameInts[VELOCITY] - game->powerup[index].speed)/6;
+        game->powerup[index].speed = -game->gameInts[VELOCITY]/10;
+    }
 }
 
 void changeRoad(struct game *game)
@@ -115,27 +181,27 @@ void changeRoad(struct game *game)
     int randomNumber, currentWidth, pushLeft, pushRight;
     if(!game->gameState[TRANSITION] && rand()%100 <= WIDTH_CHANGE_CHANCE)
     {
-        randomNumber = rand()%5;
+        randomNumber = rand()%4;
         currentWidth = game->wall[1].object.pos.x - game->wall[0].object.pos.w;
         switch(randomNumber)
         {
-            case 0: case 1: // Shrink
+            case 0:  // Shrink
                 if(currentWidth < WIDTH_MIN )
                     return;
                 pushLeft = pushRight = WIDTH_CHANGE_OFFSET;
                 break;
-            case 2: // Grow
+            case 1: // Grow
                 if(currentWidth > WIDTH_MAX || game->wall[0].object.pos.w < WIDTH_MIN_DIRECTION || game->wall[1].object.pos.w < WIDTH_MIN_DIRECTION)
                     return;
                 pushLeft = pushRight = -WIDTH_CHANGE_OFFSET;
                 break;
-            case 3: //Push left
+            case 2: //Push left
                 if(game->wall[0].object.pos.w < WIDTH_MIN_DIRECTION)
                     return;
                 pushLeft = -WIDTH_CHANGE_OFFSET;
                 pushRight = WIDTH_CHANGE_OFFSET;
                 break;
-            case 4: //Push Right
+            case 3: //Push Right
                 if(game->wall[1].object.pos.w < WIDTH_MIN_DIRECTION)
                     return;
                 pushLeft = WIDTH_CHANGE_OFFSET;
@@ -148,7 +214,7 @@ void changeRoad(struct game *game)
         game->gameState[TRANSITION] = TRUE;
         game->gameInts[TRANSITION_Y] = 0;
         game->gameInts[ENEMY_SPAWN_MIN_X] = game->wall[0].object.pos.w + pushLeft;
-        game->gameInts[ENEMY_SPAWN_MAX_X] = game->wall[1].object.pos.x - pushRight;
+        game->gameInts[ENEMY_SPAWN_MAX_X] = game->wall[1].object.pos.x - pushRight - CAR_WIDTH;
     }
 }
 
@@ -196,13 +262,30 @@ void handleRespawn(struct game *game, struct gameGFX *gfx, int *currentTime, int
 
 
 
-void quit(struct game *game, struct gameGFX *gfx)
+void freeGame(struct game *game)
 {
-	SDL_DestroyTexture(gfx->scrtex);
-	SDL_DestroyWindow(gfx->window);
-	SDL_DestroyRenderer(gfx->renderer);
     free(game->wall);
     free(game->enemy);
     free(game->bullet);
-    SDL_Quit();
+}
+void freeGFX(struct gameGFX *gfx)
+{
+	SDL_DestroyTexture(gfx->scrtex);
+	SDL_DestroyWindow(gfx->window);
+	SDL_DestroyRenderer(gfx->renderer);    
+}
+
+int compareTime(const void *s1, const void *s2)
+{
+  struct entry *e1 = (struct entry *)s1;
+  struct entry *e2 = (struct entry *)s2;
+
+  return (e2->score - e1->score);
+}
+int compareScore(const void *s1, const void *s2)
+{
+  struct entry *e1 = (struct entry *)s1;
+  struct entry *e2 = (struct entry *)s2;
+
+  return (e2->time - e1->time);
 }

@@ -1,5 +1,6 @@
 #include "main.h"
 
+//Player movement switch
 void keyCheck(struct game *game, struct gameGFX *gfx,const Uint8 *keystate, int key, int direction)
 {
 	if(keystate[key])
@@ -22,7 +23,7 @@ void input(struct game *game, struct gameGFX *gfx)
         {
 			case SDL_KEYDOWN: case SDL_KEYUP:
                 const Uint8 *keystate = SDL_GetKeyboardState(NULL);
-                if(keystate[PAUSE_KEY])
+                if(keystate[PAUSE_KEY] && game->gameState[END_GAME] == FALSE)
                 {
                     if(game->gameState[IS_PAUSED])
                     {
@@ -52,11 +53,21 @@ void input(struct game *game, struct gameGFX *gfx)
                 }
                 if(keystate[SAVE_KEY])
                 {
-                    saveInput(game, gfx);
+                    if(game->gameState[END_GAME] == TRUE)
+                    {
+                        saveScore(game,gfx);
+                    }
+                    else
+                        saveInput(game, gfx);
                 }
                 if(keystate[LOAD_KEY])
                 {
-                    loadInput(game, gfx);
+                    if(game->gameState[END_GAME] == TRUE)
+                    {
+                        loadScore(game,gfx);
+                    }
+                    else
+                        loadInput(game, gfx);
                 }
 				keyCheck(game, gfx, keystate, SDL_SCANCODE_UP, MOVE_UP);
                 keyCheck(game, gfx, keystate, SDL_SCANCODE_DOWN, MOVE_DOWN);
@@ -79,15 +90,16 @@ void inputCompute(struct game *game)
 
     game->player.object.lastPosX = game->player.object.pos.x;
     game->player.object.lastPosY = game->player.object.pos.y;
-
+    //If player is before middle accelerate
     if(game->gameState[MOVE_UP] && game->player.object.pos.y >= SCREEN_HEIGHT/2)
     {
         game->player.object.pos.y -= CAR_BASE_SPEED;
         game->gameInts[VELOCITY] += CAR_BASE_SPEED;
     }
+    //if player is stoped
     if(game->player.object.pos.y >= START_POSY)
         return;
-
+    
     if(game->gameState[MOVE_DOWN])
     {
         game->player.object.pos.y += CAR_BASE_SPEED/2;

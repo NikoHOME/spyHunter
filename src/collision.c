@@ -31,6 +31,7 @@ void collision(struct game *game)
             continue;
         }
     }
+    
     for(index=0; index < MAX_ENEMY; ++index)
     {
         if(game->enemy[index].dead)
@@ -54,43 +55,96 @@ void collision(struct game *game)
                 continue;
             enemyCollision(game, direction, index, index2);
         }
-        for(index2=0; index2 < MAX_BULLETS; ++index2)
-        {
-            if(game->bullet[index].dead)
-                continue;
-            if(checkCollision(game->enemy[index].object, game->bullet[index2].object))
-            {
-                if(!game->enemy[index].isArmoured)
-                {
-                    if(game->enemy[index].isCivilian)
-                    {
-                        game->gameState[KILLED_CIVILIAN] = TRUE;
-                        game->gameInts[PENALTY_END] = 0;
-                    }
-                    else
-                    {
-                    }
-                    game->enemy[index].dead = TRUE;
-                    game->bullet[index2].dead = TRUE;
-                    --game->gameInts[ENEMY_AMMOUNT];
-                    --game->gameInts[BULLET_AMMOUNT];
-                    continue;
-                }
-                game->bullet[index2].dead = TRUE;
-                --game->gameInts[BULLET_AMMOUNT];
-            }
-        }
+        powerupCollision(game,index, index2);
+        bulletCollision(game, index, index2);
         if(!(direction = checkCollision(game->player.object, game->enemy[index].object)))
             continue;
         playerCollision(game, direction, index);
     }
 }
 
+void powerupCollision(struct game *game, int index, int index2)
+{
+    for(index=0; index < MAX_POWERUP; ++index)  
+    {
+        if(game->powerup[index].dead)
+            continue;
+        if(!(checkCollision(game->player.object, game->powerup[index].object)))
+            continue;
+        game->powerup[index].dead = TRUE;
+        --game->gameInts[POWERUP_AMMOUNT];
+        switch(game->powerup[index].type)
+        {
+            case POWERUP_RANGE:
+                game->gameInts[POWERUP_DURATION] = POWERUP_RANGE_DURATION;
+                break;
+            case POWERUP_SCORE:
+                game->gameInts[SCORE] += SCORE_PER_POWERUP;
+                break;
+        }
+    }
+}
+
+
+void bulletCollision(struct game *game, int index, int index2)
+{
+    for(index2=0; index2 < MAX_BULLETS; ++index2)
+    {
+        if(game->bullet[index2].dead)
+            continue;
+        if(checkCollision(game->enemy[index].object, game->bullet[index2].object))
+        {
+            if(!game->enemy[index].isArmoured)
+            {
+                if(game->enemy[index].isCivilian)
+                {
+                    game->gameState[KILLED_CIVILIAN] = TRUE;
+                    game->gameInts[PENALTY_END] = 0;
+                }
+                else
+                {
+                    if(game->enemy[index].isPowerup)
+                    {
+                        spawnBox(game, index, POWERUP_RANGE);
+                    }
+                    else if(game->enemy[index].isPowerupScore)
+                    {
+                        spawnBox(game, index, POWERUP_SCORE);
+                    }
+                }
+                game->enemy[index].dead = TRUE;
+                game->bullet[index2].dead = TRUE;
+                --game->gameInts[ENEMY_AMMOUNT];
+                continue;
+            }
+            game->bullet[index2].dead = TRUE;
+            --game->gameInts[BULLET_AMMOUNT];
+            
+        }
+    }
+}
+
 void enemyCollision(struct game *game, char direction, int index, int index2)
 {
+    //Stun enemy for possibility of pushing by the player
+    if(game->enemy[index].isCivilian)
+        game->enemy[index].stunned = CIVILIAN_STUN;
+    else if(game->enemy[index].isArmoured)
+        game->enemy[index].stunned = ARMORED_STUN;
+    else
+        game->enemy[index].stunned = ENEMY_STUN;
+
+    if(game->enemy[index2].isCivilian)
+        game->enemy[index2].stunned = CIVILIAN_STUN;
+    else if(game->enemy[index2].isArmoured)
+        game->enemy[index2].stunned = ARMORED_STUN;
+    else
+        game->enemy[index2].stunned = ENEMY_STUN;
+    //Move based on direction
     switch(direction)
     {
         case UP:
+            //Kill ifo too fast
             if(abs(game->enemy[index].speed - game->enemy[index2].speed) >= KILL_SPEED)
             {    
                 game->enemy[index].dead = TRUE;
@@ -107,6 +161,7 @@ void enemyCollision(struct game *game, char direction, int index, int index2)
             }
             break;
         case DOWN:
+            //Kill if too fast
             if(abs(game->enemy[index].speed - game->enemy[index2].speed) >= KILL_SPEED)
             {
                 game->enemy[index2].dead = TRUE;
@@ -136,9 +191,17 @@ void enemyCollision(struct game *game, char direction, int index, int index2)
 
 void playerCollision(struct game *game, char direction, int index)
 {
+    //Stun enemy for possibility of pushing by the player
+    if(game->enemy[index].isCivilian)
+        game->enemy[index].stunned = CIVILIAN_STUN;
+    else if(game->enemy[index].isArmoured)
+        game->enemy[index].stunned = ARMORED_STUN;
+    else
+        game->enemy[index].stunned = ENEMY_STUN;
     switch(direction)
     {
         case UP:
+            //Kill player if traveling too fast
             if(game->gameInts[VELOCITY] >= KILL_SPEED)
             {    
                 game->gameState[DEAD] = TRUE;
@@ -155,9 +218,11 @@ void playerCollision(struct game *game, char direction, int index)
             }
             break;
         case DOWN:
+            //Kill enemy if traveling too fast
             if(game->gameInts[VELOCITY] >= CIVILIAN_SPEED*2)
             {
                 game->enemy[index].dead = TRUE;
+                --game->gameInts[ENEMY_AMMOUNT];
             }
             else
             {

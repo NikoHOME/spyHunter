@@ -1,6 +1,11 @@
 {
     "files.associations": {
         "typeindex": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "chrono": "c",
+        "variant": "c",
+        "sdl.h": "c",
+        "sdl_image.h": "c",
+        "sdl_main.h": "c"
     }
 }
